@@ -49,6 +49,8 @@ def train_gan(epochs):
 
     """
     Now we train the generator by backpropagating from loss to discriminator to generator
+    and we do so by assuming that the generated data is real, and we optimize the system
+    to make it so that the generator fools the discriminator
     """
     opt_G.zero_grad()
     z = [random.uniform(0,1)]
