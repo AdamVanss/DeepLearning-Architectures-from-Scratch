@@ -56,32 +56,32 @@ class Layer(ABC):
 class Dense(Layer):
   def __init__(self, input_size, output_size):
     """Initialize weights randomly and biases to zero"""
-    self._weights = np.array([[Parameter(np.random.uniform(-0.1, 0.1)) for _ in range(input_size)] for _ in range(output_size)])
+    self._Weights = np.array([[Parameter(np.random.uniform(-0.1, 0.1)) for _ in range(input_size)] for _ in range(output_size)])
     self._biases = np.array([Parameter(0.0) for _ in range(output_size)])
   
   def forward(self, x):
     """Compute output = weights @ input + biases"""
     x = np.array(x, dtype=np.float64)
-    output = np.zeros(len(self._weights), dtype=np.float64)
-    for i in range(len(self._weights)):
-      for j in range(len(self._weights[0])):
-        output[i] += self._weights[i][j].value * x[j]
+    output = np.zeros(len(self._Weights), dtype=np.float64)
+    for i in range(len(self._Weights)):
+      for j in range(len(self._Weights[0])):
+        output[i] += self._Weights[i][j].value * x[j]
       output[i] += self._biases[i].value
     return output
 
   def parameters(self):
     """Return all weight and bias parameters"""
-    return [p for row in self._weights for p in row] + list(self._biases)
+    return [p for row in self._Weights for p in row] + list(self._biases)
 
   def backward(self, x, grad_output):
     """Compute gradients for weights, biases, and input"""
     x = np.array(x, dtype=np.float64)
     grad_output = np.array(grad_output, dtype=np.float64)
     grad_input = np.zeros(len(x), dtype=np.float64)
-    for i in range(len(self._weights)):
-      for j in range(len(self._weights[0])):
-        self._weights[i][j].add_grad(grad_output[i] * x[j])
-        grad_input[j] += self._weights[i][j].value * grad_output[i]
+    for i in range(len(self._Weights)):
+      for j in range(len(self._Weights[0])):
+        self._Weights[i][j].add_grad(grad_output[i] * x[j])
+        grad_input[j] += self._Weights[i][j].value * grad_output[i]
       self._biases[i].add_grad(grad_output[i])
     return grad_input
 
@@ -242,36 +242,3 @@ class Model:
       avg_loss = total_loss / len(X)
       if verbose and (epoch + 1) % (epochs // 10) == 0:
         print(f"Epoch {epoch + 1}/{epochs}, Loss: {avg_loss:.6f}")
-
-# Set random seeds for reproducibility
-np.random.seed(42)
-random.seed(42)
-
-# Create model for XOR problem: 2 inputs -> 16 -> 8 -> 1 output
-model = Model([
-  Dense(2, 16),
-  ReLU(),
-  Dense(16, 8),
-  ReLU(),
-  Dense(8, 1),
-  Sigmoid()
-])
-
-# XOR dataset: inputs and targets
-X_train = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.float64)
-y_train = np.array([[0], [1], [1], [0]], dtype=np.float64)
-
-# Setup optimizer and loss function
-optimizer = SGD(model.parameters(), lr=0.1)
-loss_fn = BinaryCrossEntropy()
-
-print("Training XOR problem...")
-model.fit(X_train, y_train, loss_fn, optimizer, epochs=1000, verbose=True)
-
-# Evaluate model on training data
-print("\nTesting predictions:")
-for i, x in enumerate(X_train):
-  pred = model.forward(x)
-  print(f"Input: {x}, Target: {y_train[i][0]:.1f}, Prediction: {pred[0]:.4f}")
-
-print(f"\nTotal parameters: {len(model.parameters())}")
